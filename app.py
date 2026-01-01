@@ -92,7 +92,7 @@ def threat_description():
     if not engine or not category:
         return jsonify({"error": "Недостаточно данных"}), 400
     prompt = f"""
-Вы — эксперт по кибербезопасности. Объясните, что делает вредоносная программа, обнаруженная антивирусом "{engine}".
+Вы — эксперт по кибербезопасности. Объясните, что делает вредоносная программа и является ли программа вредоносной, обнаруженная антивирусом "{engine}".
 Категория: {category}
 Результат: {result}
 
@@ -126,4 +126,5 @@ def threat_description():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host="0.0.0.0", port=port)
