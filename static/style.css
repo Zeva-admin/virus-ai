@@ -107,24 +107,14 @@ header p {
 }
 
 /* === ФОРМА === */
-#scanForm {
-    background: var(--bg-card);
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
-}
-
-.input-group {
+.input-armoup {
     display: flex;
     gap: 12px;
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
-.input-group input {
+.input-armoup input {
     flex: 1;
     min-width: 200px;
     padding: 16px 20px;
@@ -140,12 +130,12 @@ header p {
     font-family: inherit;
 }
 
-.input-group input:focus {
+.input-armoup input:focus {
     border-color: var(--button-bg);
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
-.input-group button {
+.input-armoup button {
     background: var(--button-bg);
     color: white;
     border: none;
@@ -157,13 +147,13 @@ header p {
     transition: all 0.3s ease;
 }
 
-.input-group button:hover:not(:disabled) {
+.input-armoup button:hover:not(:disabled) {
     background: var(--button-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
 
-.input-group button:disabled {
+.input-armoup button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
@@ -628,6 +618,49 @@ header p {
     white-space: pre-wrap;
 }
 
+/* === ФУТЕР === */
+.footer {
+    margin-top: 50px;
+    padding: 20px;
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* === КНОПКА СКАЧИВАНИЯ === */
+.download-section {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.download-btn {
+    background: #e91e63;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.2);
+}
+
+.download-btn:hover {
+    background: #ad1457;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(233, 30, 99, 0.3);
+}
+
+.download-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 /* === КНОПКА ТЕМЫ === */
 #theme-toggle {
     position: fixed;
@@ -681,7 +714,7 @@ header p {
         flex-direction: column;
     }
     
-    .input-group input {
+    .input-armoup input {
         min-width: 100%;
     }
     
@@ -736,5 +769,14 @@ header p {
     #theme-icon {
         width: 24px;
         height: 24px;
+    }
+    
+    .download-section {
+        margin: 20px 0;
+    }
+    
+    .download-btn {
+        padding: 12px 20px;
+        font-size: 1rem;
     }
 }
