@@ -4,17 +4,22 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>🛡️ VirusScan Pro — Проверка ссылок</title>
+    <title>Guga Virus Checker — Проверка ссылок</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- НЕТ тега <link rel="icon"> — favicon.ico в корне обрабатывается автоматически -->
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-shield-virus"></i> VirusScan Pro</h1>
+            <div class="logo-title">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Guga Virus Checker" class="logo" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iIzQwNDI0RSIvPjxjaXJjbGUgY3g9IjI1IiBjeT0iMjUiIHI9IjEwIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+';">
+                <h1>Guga Virus Checker</h1>
+            </div>
             <p>Проверка ссылок на вредоносность через VirusTotal + AI-анализ угроз</p>
         </header>
 
+        <!-- (остальной код без изменений — как в предыдущих сообщениях) -->
         <form id="scanForm" method="POST">
             <div class="input-group">
                 <input type="url" name="url" placeholder="https://example.com" required />
@@ -93,7 +98,6 @@
 
                 <h3><i class="fas fa-list"></i> Детали по движкам</h3>
 
-                <!-- Только вредоносные и подозрительные -->
                 {% set dangerous_engines = [] %}
                 {% for engine, info in results.items() %}
                     {% if info.category == 'malicious' or info.category == 'suspicious' %}
@@ -124,7 +128,6 @@
                     </div>
                 {% endif %}
 
-                <!-- Полный список -->
                 <details class="all-engines-details">
                     <summary>Показать все {{ results|length }} движков</summary>
                     <div class="engines">
@@ -144,7 +147,6 @@
         {% endif %}
     </div>
 
-    <!-- Модальное окно для описания угрозы -->
     <div id="threatModal" class="modal hidden">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -178,16 +180,24 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ engine, category, result })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Сервер вернул не JSON");
+                }
+                return res.json();
+            })
             .then(data => {
                 if (data.error) {
-                    descEl.innerHTML = `<span style="color: red;">${data.error}</span>`;
+                    descEl.innerHTML = `<span style="color: red;">⚠️ ${data.error}</span>`;
                 } else {
                     descEl.textContent = data.description;
                 }
             })
             .catch(err => {
-                descEl.innerHTML = `<span style="color: red;">Ошибка загрузки: ${err.message}</span>`;
+                console.error("Ошибка:", err);
+                descEl.innerHTML = `<span style="color: red;">❌ Ошибка: ${err.message}</span>`;
             });
         }
 
