@@ -7,7 +7,9 @@
     <title>Guga Virus Checker — Проверка ссылок</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- НЕТ тега <link rel="icon"> — favicon.ico в корне обрабатывается автоматически -->
+    
+    <!-- Favicon (опционально) -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 </head>
 <body>
     <div class="container">
@@ -18,7 +20,6 @@
             <p>Проверка ссылок на вредоносность через VirusTotal + AI-анализ угроз</p>
         </header>
 
-        <!-- (остальной код без изменений — как в предыдущих сообщениях) -->
         <form id="scanForm" method="POST">
             <div class="input-group">
                 <input type="url" name="url" placeholder="https://example.com" required />
@@ -146,6 +147,7 @@
         {% endif %}
     </div>
 
+    <!-- Модальное окно для описания угрозы -->
     <div id="threatModal" class="modal hidden">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -155,6 +157,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Кнопка переключения темы -->
+    <button id="theme-toggle" aria-label="Переключить тему">
+        <img id="theme-icon" src="" alt="Тема" />
+    </button>
 
     <script>
         const form = document.getElementById('scanForm');
@@ -203,7 +210,33 @@
         function closeModal() {
             document.getElementById('threatModal').classList.add('hidden');
         }
+
+        // === УПРАВЛЕНИЕ ТЕМОЙ ===
+        function getPreferredTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved) return saved;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const icon = document.getElementById('theme-icon');
+            icon.src = theme === 'dark' 
+                ? "{{ url_for('static', filename='light-mode.png') }}" 
+                : "{{ url_for('static', filename='dark-mode.svg') }}";
+        }
+
+        // Инициализация
+        const initialTheme = getPreferredTheme();
+        setTheme(initialTheme);
+
+        // Переключение
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
     </script>
 </body>
 </html>
-
