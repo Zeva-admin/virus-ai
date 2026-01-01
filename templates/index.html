@@ -7,8 +7,6 @@
     <title>Guga Virus Checker — Проверка ссылок</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    
-    <!-- Favicon (опционально) -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 </head>
 <body>
@@ -21,7 +19,7 @@
         </header>
 
         <form id="scanForm" method="POST">
-            <div class="input-group">
+            <div class="input-armoup">
                 <input type="url" name="url" placeholder="https://example.com" required />
                 <button type="submit" id="scanBtn">
                     <i class="fas fa-search"></i> Проверить
@@ -132,7 +130,7 @@
                     <summary>Показать все {{ results|length }} движков</summary>
                     <div class="engines">
                         {% for engine, info in results.items() %}
-                            <div class="engine-row {{ info.category }}">
+                            <div class "engine-row {{ info.category }}">
                                 <div class="engine-name">{{ engine }}</div>
                                 <div class="engine-category">{{ info.category|translate_category }}</div>
                                 <div class="engine-result">{{ info.result or '—' }}</div>
@@ -158,10 +156,29 @@
         </div>
     </div>
 
+    <!-- Футер -->
+    <footer class="footer">
+        <p>&copy; 2026 Guga Virus Checker. Все права защищены.</p>
+        <p>Проверяйте ссылки на безопасность с ИИ и VirusTotal</p>
+    </footer>
+
+    <!-- Кнопка скачивания -->
+    {% if meta %}
+    <div class="download-section">
+        <button id="downloadPdf" class="download-btn">
+            <i class="fas fa-file-pdf"></i> Скачать отчёт в PDF
+        </button>
+    </div>
+    {% endif %}
+
     <!-- Кнопка переключения темы -->
     <button id="theme-toggle" aria-label="Переключить тему">
         <img id="theme-icon" src="" alt="Тема" />
     </button>
+
+    <!-- Библиотеки для PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
         const form = document.getElementById('scanForm');
@@ -236,6 +253,149 @@
             const current = document.documentElement.getAttribute('data-theme');
             const newTheme = current === 'dark' ? 'light' : 'dark';
             setTheme(newTheme);
+        });
+
+        // === СКАЧИВАНИЕ PDF ===
+        document.getElementById('downloadPdf')?.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            
+            const pdfContainer = document.createElement('div');
+            pdfContainer.id = 'pdf-content';
+            pdfContainer.style.padding = '20px';
+            pdfContainer.style.width = '700px';
+            pdfContainer.style.fontFamily = 'Segoe UI, sans-serif';
+            pdfContainer.style.fontSize = '14px';
+            pdfContainer.style.color = '#2c3e50';
+            
+            const title = document.createElement('h1');
+            title.textContent = 'Отчёт о безопасности';
+            title.style.fontSize = '24px';
+            title.style.marginBottom = '20px';
+            title.style.color = '#2c3e50';
+            pdfContainer.appendChild(title);
+            
+            const logo = document.createElement('div');
+            logo.innerHTML = '<strong>Guga Virus Checker</strong>';
+            logo.style.fontSize = '18px';
+            logo.style.marginBottom = '30px';
+            pdfContainer.appendChild(logo);
+            
+            const urlDiv = document.createElement('div');
+            urlDiv.innerHTML = `<strong>Проверенная ссылка:</strong> <code>${document.querySelector('.url-box code').textContent}</code>`;
+            urlDiv.style.marginBottom = '20px';
+            urlDiv.style.padding = '10px';
+            urlDiv.style.backgroundColor = '#f1f8ff';
+            urlDiv.style.borderRadius = '6px';
+            urlDiv.style.border = '1px solid #e0e0e0';
+            urlDiv.style.fontFamily = 'monospace';
+            pdfContainer.appendChild(urlDiv);
+            
+            const date = document.createElement('div');
+            date.innerHTML = `<strong>Дата анализа:</strong> ${document.querySelector('.date').textContent.replace('Дата: ', '')}`;
+            date.style.marginBottom = '20px';
+            pdfContainer.appendChild(date);
+            
+            const summary = document.createElement('div');
+            summary.innerHTML = '<h2>Сводка</h2>';
+            summary.style.marginBottom = '15px';
+            summary.style.fontSize = '18px';
+            pdfContainer.appendChild(summary);
+            
+            const summaryItems = document.querySelectorAll('.summary-item');
+            const summaryList = document.createElement('ul');
+            summaryItems.forEach(item => {
+                const label = item.querySelector('.label').textContent;
+                const value = item.querySelector('.value').textContent;
+                const li = document.createElement('li');
+                li.textContent = `${label}: ${value}`;
+                li.style.marginBottom = '8px';
+                summaryList.appendChild(li);
+            });
+            pdfContainer.appendChild(summaryList);
+            
+            const stats = document.createElement('div');
+            stats.innerHTML = '<h2>Статистика по антивирусам</h2>';
+            stats.style.marginTop = '20px';
+            stats.style.marginBottom = '10px';
+            stats.style.fontSize = '16px';
+            pdfContainer.appendChild(stats);
+            
+            const statsBar = document.querySelector('.stats-bar');
+            if (statsBar) {
+                const statsList = document.createElement('ul');
+                const items = statsBar.querySelectorAll('.stat-bar-item');
+                items.forEach(item => {
+                    const text = item.querySelector('span')?.textContent || item.textContent;
+                    const li = document.createElement('li');
+                    li.textContent = text;
+                    li.style.marginBottom = '5px';
+                    statsList.appendChild(li);
+                });
+                pdfContainer.appendChild(statsList);
+            }
+            
+            const threats = document.querySelector('.dangerous-list');
+            if (threats) {
+                const threatsDiv = document.createElement('div');
+                threatsDiv.innerHTML = '<h2>Обнаруженные угрозы</h2>';
+                threatsDiv.style.marginTop = '20px';
+                threatsDiv.style.marginBottom = '10px';
+                threatsDiv.style.fontSize = '16px';
+                pdfContainer.appendChild(threatsDiv);
+                
+                const threatList = document.createElement('ul');
+                const threatItems = threats.querySelectorAll('li');
+                threatItems.forEach(item => {
+                    const text = item.textContent.replace('ℹ️', '').trim();
+                    const li = document.createElement('li');
+                    li.textContent = text;
+                    li.style.marginBottom = '8px';
+                    threatList.appendChild(li);
+                });
+                pdfContainer.appendChild(threatList);
+            } else {
+                const safeDiv = document.createElement('div');
+                safeDiv.innerHTML = '<h2>Обнаруженные угрозы</h2><p>Никаких угроз не обнаружено.</p>';
+                safeDiv.style.marginTop = '20px';
+                safeDiv.style.marginBottom = '10px';
+                pdfContainer.appendChild(safeDiv);
+            }
+            
+            const footer = document.createElement('div');
+            footer.style.marginTop = '40px';
+            footer.style.fontSize = '12px';
+            footer.style.color = '#9e9e9e';
+            footer.innerHTML = `Сгенерировано автоматически через Guga Virus Checker — ${new Date().toLocaleString('ru-RU')}`;
+            pdfContainer.appendChild(footer);
+            
+            document.body.appendChild(pdfContainer);
+            pdfContainer.style.position = 'absolute';
+            pdfContainer.style.left = '-9999px';
+            
+            setTimeout(() => {
+                html2canvas(pdfContainer).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const pageHeight = 297;
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    
+                    pdf.save(`Guga_Virus_Checker_Отчёт_${new Date().toISOString().slice(0,10)}.pdf`);
+                    document.body.removeChild(pdfContainer);
+                });
+            }, 100);
         });
     </script>
 </body>
