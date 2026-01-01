@@ -1,0 +1,199 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>🛡️ VirusScan Pro — Проверка ссылок</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-virus"></i> VirusScan Pro</h1>
+            <p>Проверка ссылок на вредоносность через VirusTotal + AI-анализ угроз</p>
+        </header>
+
+        <form id="scanForm" method="POST">
+            <div class="input-group">
+                <input type="url" name="url" placeholder="https://example.com" required />
+                <button type="submit" id="scanBtn">
+                    <i class="fas fa-search"></i> Проверить
+                </button>
+            </div>
+        </form>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Анализируем ссылку... это займёт 5–15 секунд</p>
+        </div>
+
+        <div id="error" class="alert alert-error hidden"></div>
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        {% if meta %}
+            <div class="result-card animate-in">
+                <div class="result-header">
+                    <h2><i class="fas fa-globe"></i> Анализ:</h2>
+                    <div class="url-box">
+                        <code>{{ meta.url }}</code>
+                    </div>
+                </div>
+
+                <div class="date">Дата: {{ meta.date }}</div>
+
+                <div class="summary">
+                    <div class="summary-item malicious">
+                        <i class="fas fa-bug"></i>
+                        <div>
+                            <span class="value">{{ meta.malicious_count|default(0) }}</span>
+                            <span class="label">Вредоносных</span>
+                        </div>
+                    </div>
+                    <div class="summary-item suspicious">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <span class="value">{{ meta.suspicious_count|default(0) }}</span>
+                            <span class="label">Подозрительных</span>
+                        </div>
+                    </div>
+                    <div class="summary-item total">
+                        <i class="fas fa-microchip"></i>
+                        <div>
+                            <span class="value">{{ meta.total|default(0) }}</span>
+                            <span class="label">Антивирусов</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-bar">
+                    {% if stats %}
+                        {% set total = stats.harmless|default(0) + stats.malicious|default(0) + stats.suspicious|default(0) + stats.undetected|default(0) + stats.timeout|default(0) %}
+                        {% if total == 0 %}{% set total = 1 %}{% endif %}
+
+                        <div class="stat-bar-item harmless" style="width: {{ (stats.harmless|default(0) / total * 100)|round(1) }}%;">
+                            <span>{{ stats.harmless|default(0) }} безопасно</span>
+                        </div>
+                        <div class="stat-bar-item malicious" style="width: {{ (stats.malicious|default(0) / total * 100)|round(1) }}%;">
+                            <span>{{ stats.malicious|default(0) }} вредоносно</span>
+                        </div>
+                        <div class="stat-bar-item suspicious" style="width: {{ (stats.suspicious|default(0) / total * 100)|round(1) }}%;">
+                            <span>{{ stats.suspicious|default(0) }} подозрительно</span>
+                        </div>
+                    {% else %}
+                        <div class="stat-bar-item" style="width: 100%; background: #ccc;">
+                            <span>Данные недоступны</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h3><i class="fas fa-list"></i> Детали по движкам</h3>
+
+                <!-- Только вредоносные и подозрительные -->
+                {% set dangerous_engines = [] %}
+                {% for engine, info in results.items() %}
+                    {% if info.category == 'malicious' or info.category == 'suspicious' %}
+                        {% set _ = dangerous_engines.append(engine) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if dangerous_engines %}
+                    <div class="dangerous-list">
+                        <p><strong>⚠️ Обнаружено угроз:</strong> {{ dangerous_engines|length }} движками</p>
+                        <ul>
+                            {% for engine in dangerous_engines %}
+                                {% set info = results[engine] %}
+                                <li class="{{ info.category }}">
+                                    <strong>{{ engine }}</strong> — 
+                                    <span class="category">{{ info.category|translate_category }}</span>
+                                    {% if info.result %}→ {{ info.result }}{% endif %}
+                                    <button class="info-btn" onclick="showThreatInfo('{{ engine }}', '{{ info.category }}', '{{ info.result | replace("'", "\\'") }}')">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="safe-message">
+                        <i class="fas fa-check-circle"></i> Никаких угроз не обнаружено.
+                    </div>
+                {% endif %}
+
+                <!-- Полный список -->
+                <details class="all-engines-details">
+                    <summary>Показать все {{ results|length }} движков</summary>
+                    <div class="engines">
+                        {% for engine, info in results.items() %}
+                            <div class="engine-row {{ info.category }}">
+                                <div class="engine-name">{{ engine }}</div>
+                                <div class="engine-category">{{ info.category|translate_category }}</div>
+                                <div class="engine-result">{{ info.result or '—' }}</div>
+                                <button class="info-btn" onclick="showThreatInfo('{{ engine }}', '{{ info.category }}', '{{ info.result | replace("'", "\\'") }}')">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </details>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Модальное окно для описания угрозы -->
+    <div id="threatModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3>ℹ️ Описание угрозы</h3>
+            <div id="threatDescription" class="description">
+                Загрузка...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('scanForm');
+        const loading = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+
+        form.addEventListener('submit', () => {
+            loading.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            document.getElementById('scanBtn').disabled = true;
+        });
+
+        function showThreatInfo(engine, category, result) {
+            const modal = document.getElementById('threatModal');
+            const descEl = document.getElementById('threatDescription');
+            
+            modal.classList.remove('hidden');
+            descEl.textContent = "Загрузка описания...";
+            
+            fetch('/api/threat-description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ engine, category, result })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    descEl.innerHTML = `<span style="color: red;">${data.error}</span>`;
+                } else {
+                    descEl.textContent = data.description;
+                }
+            })
+            .catch(err => {
+                descEl.innerHTML = `<span style="color: red;">Ошибка загрузки: ${err.message}</span>`;
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('threatModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
